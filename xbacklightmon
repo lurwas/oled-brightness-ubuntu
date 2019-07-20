@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# The script needs US locate for numbers to work
+LC_NUMERIC="en_US.UTF-8"
+
+# modify this path to the location of your backlight class
+backlight_path=/sys/class/backlight/intel_backlight
+
+luminance() {
+    read -r level < "$backlight_path"/actual_brightness
+    factor=$((max))
+    new_brightness="$(bc -l <<< "scale = 2; $level / $factor")"
+    printf '%f\n' $new_brightness
+}
+
+read -r max < "$backlight_path"/max_brightness
+
+xrandr --output eDP-1 --brightness "$(luminance)"
+
+inotifywait -me modify "$backlight_path"/actual_brightness | while read; do
+    xrandr --output eDP-1 --brightness "$(luminance)"
+done
